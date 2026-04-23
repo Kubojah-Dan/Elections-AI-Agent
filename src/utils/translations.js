@@ -792,11 +792,74 @@ export const translations = {
     important_note: 'महत्वपूर्ण सूचना',
     calendar_disclaimer: 'तिथियां भारत निर्वाचन आयोग द्वारा आधिकारिक अधिसूचनाओं के अधीन हैं। कृपया आधिकारिक स्रोतों से सत्यापित करें।',
     no_elections_found: 'इस चयन के लिए कोई आगामी चुनाव नहीं मिले।',
+  },
+  bn: {
+    app_name: 'মদাতা মিত্র',
+    welcome_title: 'মদাতা মিত্র',
+    welcome_tagline: 'ভারতের নির্বাচনী প্রক্রিয়ার জন্য আপনার বিশ্বস্ত নির্দেশিকা - প্রতিটি নাগরিকের জন্য বিনামূল্যে',
+    select_language: 'আপনার ভাষা নির্বাচন করুন',
+    proceed: 'এগিয়ে যান',
+    next: 'পরবর্তী',
+    back: 'ফিরে যান',
+    chat: 'চ্যাট',
+    learn: 'শিখুন',
+    tools: 'সরঞ্জাম',
+    settings: 'সেটিংস',
+    ask_placeholder: 'নিবন্ধন বা ভোটদান সম্পর্কে জিজ্ঞাসা করুন...',
+  },
+  te: {
+    app_name: 'మతదాత మిత్ర',
+    welcome_title: 'మతదాత మిత్ర',
+    welcome_tagline: 'భారతదేశ ఎన్నికల ప్రక్రియకు మీ విశ్వసనీయ మార్గదర్శి - ప్రతి పౌరుడికి ఉచితం',
+    select_language: 'మీ భాషను ఎంచుకోండి',
+    proceed: 'కొనసాగించండి',
+    next: 'తరువాత',
+    back: 'వెనుకకు',
+    chat: 'చాట్',
+    learn: 'నేర్చుకోండి',
+    tools: 'ఉపకరణాలు',
+    settings: 'సెట్టింగ్‌లు',
+    ask_placeholder: 'రిజిస్ట్రేషన్ లేదా ఓటింగ్ గురించి అడగండి...',
+  },
+  mr: {
+    app_name: 'मतदाता मित्र',
+    welcome_title: 'मतदाता मित्र',
+    welcome_tagline: 'भारताच्या निवडणूक प्रक्रियेसाठी तुमचा विश्वसनीय मार्गदर्शक - प्रत्येक नागरिकासाठी विनामूल्य',
+    select_language: 'तुमची भाषा निवडा',
+    proceed: 'पुढे जा',
+    next: 'पुढील',
+    back: 'मागे',
+    chat: 'चॅट',
+    learn: 'शिका',
+    tools: 'साधने',
+    settings: 'सेटिंग्ज',
+    ask_placeholder: 'नोंदणी किंवा मतदानाबद्दल विचारा...',
+  },
+  ta: {
+    app_name: 'மதদাতা மித்ரா',
+    welcome_title: 'மதদাতা மித்ரா',
+    welcome_tagline: 'இந்தியாவின் தேர்தல் செயல்முறைக்கான உங்கள் நம்பகமான வழிகாட்டி - ஒவ்வொரு குடிமகனுக்கும் இலவசம்',
+    select_language: 'உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்',
+    proceed: 'தொடரவும்',
+    next: 'அடுத்து',
+    back: 'பின்செல்',
+    chat: 'அரட்டை',
+    learn: 'கற்க',
+    tools: 'கருவிகள்',
+    settings: 'அமைப்புகள்',
+    ask_placeholder: 'பதிவு அல்லது வாக்களிப்பு பற்றி கேட்கவும்...',
   }
 };
 
-// Fallback for other languages to English for now
+// Approximate fallbacks for regional dialects
+const FALLBACK_MAP = {
+  mai: 'hi', doi: 'hi', brx: 'hi', 
+  kok: 'mr', 
+  mni: 'bn', as: 'bn',
+};
+
 export const getTranslation = (lang, key) => {
-  const dict = translations[lang] || translations.en;
+  const targetLang = translations[lang] ? lang : (FALLBACK_MAP[lang] || 'en');
+  const dict = translations[targetLang] || translations.en;
   return dict[key] || translations.en[key] || key;
 };

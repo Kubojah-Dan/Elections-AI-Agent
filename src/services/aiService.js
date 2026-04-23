@@ -75,7 +75,9 @@ function buildMessages(messages, persona, language) {
     hi: 'Hindi', bn: 'Bengali', te: 'Telugu', mr: 'Marathi',
     ta: 'Tamil', gu: 'Gujarati', kn: 'Kannada', ml: 'Malayalam',
     or: 'Odia', pa: 'Punjabi', en: 'English', ur: 'Urdu',
-    as: 'Assamese', ne: 'Nepali', sa: 'Sanskrit',
+    as: 'Assamese', ne: 'Nepali', sa: 'Sanskrit', mai: 'Maithili',
+    kok: 'Konkani', sd: 'Sindhi', ks: 'Kashmiri', mni: 'Manipuri',
+    doi: 'Dogri', brx: 'Bodo', sat: 'Santali'
   };
 
   const langName = langNames[language] || 'English';
@@ -162,7 +164,7 @@ export async function getAgentResponse(messages, persona = null, language = 'en'
   const isPotentialRumor = RUMOR_KEYWORDS.some(k => lastUserMessage.toLowerCase().includes(k));
 
   try {
-    let response = await callGemini(messages, persona, language);
+    let response = await callGroq(messages, persona, language);
     
     if (isPotentialRumor) {
       const prefix = language === 'hi' 
@@ -172,12 +174,12 @@ export async function getAgentResponse(messages, persona = null, language = 'en'
     }
 
     return response;
-  } catch (geminiError) {
-    console.warn('Gemini failed, trying fallback:', geminiError.message);
+  } catch (groqError) {
+    console.warn('Groq failed, trying Gemini:', groqError.message);
     try {
-      return await callGroq(messages, persona, language);
-    } catch (groqError) {
-      console.warn('Fallback also failed:', groqError.message);
+      return await callGemini(messages, persona, language);
+    } catch (geminiError) {
+      console.warn('Gemini also failed:', geminiError.message);
 
       // If genuinely offline
       if (!navigator.onLine) {
