@@ -1,0 +1,442 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── CSS Variables / Theming ─────────────────────── */
+:root {
+  /* Light mode */
+  --bg-primary:    #FFFFFF;
+  --bg-secondary:  #F7F8FC;
+  --bg-card:       #FFFFFF;
+  --bg-nav:        #FFFFFF;
+  --text-primary:  #111827;
+  --text-secondary:#6B7280;
+  --text-muted:    #9CA3AF;
+  --border:        #E5E7EB;
+  --border-strong: #D1D5DB;
+  --accent:        #FF9933;
+  --accent-hover:  #E68820;
+  --navy:          #0D2C6B;
+  --navy-light:    #1a4099;
+  --india-saffron: #FF9933;
+  --india-green:   #138808;
+  --india-blue:    #0D2C6B;
+  --green:         #138808;
+  --gradient-navy: linear-gradient(135deg, #0D2C6B 0%, #1a4099 100%);
+  --gradient-saffron: linear-gradient(135deg, #FF9933 0%, #FFB366 100%);
+  --shadow-sm:     0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:     0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg:     0 8px 24px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.05);
+  --shadow-card:   0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05);
+  --bubble-user-bg:     #0D2C6B;
+  --bubble-user-text:   #FFFFFF;
+  --bubble-bot-bg:      #EEF2FF;
+  --bubble-bot-border:  #C7D2FE;
+  --bubble-bot-text:    #111827;
+  --nav-height:    64px;
+  --topbar-height: 60px;
+  --sidebar-width: 248px;
+  --radius-card:   14px;
+  --radius-btn:    10px;
+}
+
+html.dark {
+  --bg-primary:    #080F1E;
+  --bg-secondary:  #0D1929;
+  --bg-card:       #0F2040;
+  --bg-nav:        #0A1525;
+  --text-primary:  #E8EDF8;
+  --text-secondary:#8AAACF;
+  --text-muted:    #5A7AA0;
+  --border:        #1C3358;
+  --border-strong: #234070;
+  
+  /* Lighter adaptation of core colors for dark mode */
+  --accent:        #FFB366;
+  --accent-hover:  #FFC88F;
+  --navy:          #82A7FF;
+  --navy-light:    #B3C9FF;
+  --green:         #4ED44E;
+  
+  --shadow-sm:     0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md:     0 4px 16px rgba(0,0,0,0.35);
+  --shadow-lg:     0 8px 32px rgba(0,0,0,0.45);
+  --shadow-card:   0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,153,51,0.06);
+  --bubble-user-bg:    #1a4099;
+  --bubble-user-text:  #FFFFFF;
+  --bubble-bot-bg:     #122040;
+  --bubble-bot-border: #1C3D70;
+  --bubble-bot-text:   #DDEAFF;
+}
+
+/* ─── Reset ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: 'Noto Sans', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  margin: 0; padding: 0;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  transition: background-color 0.25s, color 0.25s;
+}
+#root { min-height: 100dvh; display: flex; flex-direction: column; }
+
+/* ─── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+html.dark ::-webkit-scrollbar-thumb { background: #1C3A5F; }
+
+/* ─── Focus ──────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─── Text size modes ────────────────────────────── */
+.text-size-large  { font-size: 19px; }
+.text-size-xlarge { font-size: 22px; line-height: 1.7; }
+.text-size-large  .text-sm   { font-size: 16px; }
+.text-size-large  .text-base { font-size: 19px; }
+.text-size-xlarge .text-sm   { font-size: 19px; }
+.text-size-xlarge .text-base { font-size: 22px; }
+.text-size-xlarge .card { padding: 1.5rem !important; margin-bottom: 1.25rem; }
+.text-size-xlarge .btn-primary, 
+.text-size-xlarge .btn-secondary { padding: 14px 28px; border-radius: 12px; font-size: 20px; }
+
+/* ─── Glassmorphism ──────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+html.dark .glass {
+  background: rgba(13, 25, 41, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Typography ─────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family: 'Noto Serif', serif;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.3;
+}
+html.dark h1, html.dark h2, html.dark h3, html.dark h4 {
+  color: #DDEAFF;
+}
+
+/* ─── Card ───────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+}
+.card:hover { 
+  box-shadow: var(--shadow-md); 
+}
+.card-interactive:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+}
+
+/* ─── Section headers ────────────────────────────── */
+.section-header {
+  font-family: 'Noto Serif', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 4px;
+}
+html.dark .section-header { color: #DDEAFF; }
+.section-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 20px;
+}
+
+/* ─── Buttons ────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  font-size: inherit;
+  border-radius: var(--radius-btn);
+  padding: 11px 22px;
+  min-height: 44px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+  box-shadow: 0 2px 8px rgba(255,153,51,0.3);
+}
+.btn-primary:hover { 
+  background: var(--accent-hover); 
+  box-shadow: 0 4px 16px rgba(255,153,51,0.4);
+  transform: translateY(-1px);
+}
+.btn-primary:active { transform: translateY(0); }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--navy);
+  font-weight: 600;
+  font-size: inherit;
+  border-radius: var(--radius-btn);
+  padding: 10px 22px;
+  min-height: 44px;
+  border: 2px solid var(--navy);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+html.dark .btn-secondary {
+  color: #DDEAFF;
+  border-color: #3A5FA0;
+}
+.btn-secondary:hover { background: var(--navy); color: white; }
+html.dark .btn-secondary:hover { background: #1a4099; border-color: #1a4099; }
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  padding: 8px;
+  min-height: 40px;
+  min-width: 40px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-ghost:hover { 
+  background: var(--bg-secondary); 
+  color: var(--text-primary);
+}
+
+/* ─── Layout ─────────────────────────────────────── */
+/* Mobile content area (below topbar, above bottom nav) */
+.content-area {
+  padding-top: calc(var(--topbar-height) + 8px);
+  padding-bottom: calc(var(--nav-height) + 32px + env(safe-area-inset-bottom, 0px));
+  min-height: 100dvh;
+}
+@media (min-width: 1024px) {
+  .content-area {
+    padding-bottom: 2rem;
+  }
+}
+
+/* Helper for pages that have their own fixed bottom bar */
+.pb-safe-nav {
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
+}
+/* Desktop: left-sidebar spacing is safely removed */
+
+/* ─── Bottom nav (mobile only) ───────────────────── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  background: var(--bg-nav);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (min-width: 1024px) {
+  .bottom-nav { display: none !important; }
+}
+
+/* ─── Sidebar (desktop only) ─────────────────────── */
+.desktop-sidebar {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .desktop-sidebar {
+    display: flex;
+    flex-direction: column;
+    width: var(--sidebar-width);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    background: var(--bg-nav);
+    border-right: 1px solid var(--border);
+    z-index: 50;
+    overflow-y: auto;
+  }
+  .main-with-sidebar {
+    margin-left: var(--sidebar-width);
+  }
+}
+
+/* ─── Top bar ────────────────────────────────────── */
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  max-width: 1920px;
+  margin: 0 auto;
+  height: var(--topbar-height);
+  background: var(--bg-nav);
+  border-bottom: 1px solid var(--border);
+  z-index: 40;
+  backdrop-filter: blur(8px);
+}
+
+/* ─── Chat bubbles ───────────────────────────────── */
+.bubble-user {
+  background: var(--bubble-user-bg);
+  color: var(--bubble-user-text);
+  border-radius: 18px 18px 4px 18px;
+  max-width: 82%;
+}
+.bubble-assistant {
+  background: var(--bubble-bot-bg);
+  color: var(--bubble-bot-text);
+  border-radius: 18px 18px 18px 4px;
+  max-width: 88%;
+  border: 1px solid var(--bubble-bot-border);
+}
+
+/* ─── Quick reply chips ──────────────────────────── */
+.quick-reply-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 20px;
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+  min-height: 36px;
+  box-shadow: var(--shadow-sm);
+}
+html.dark .quick-reply-chip { 
+  color: #DDEAFF; 
+  border-color: #1C3A5F;
+  box-shadow: none;
+}
+.quick-reply-chip:hover {
+  background: var(--navy);
+  color: white;
+  border-color: var(--navy);
+  box-shadow: var(--shadow-md);
+}
+
+/* ─── Language tile ──────────────────────────────── */
+.lang-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-align: center;
+  min-height: 58px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+.lang-tile:hover, .lang-tile.selected {
+  border-color: var(--accent);
+  background: rgba(255,153,51,0.06);
+}
+.lang-tile.selected {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* ─── Typing dots ────────────────────────────────── */
+.typing-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: pulseDot 1.4s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulseDot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+  40%           { transform: scale(1);   opacity: 1;   }
+}
+
+/* ─── Waveform bars ──────────────────────────────── */
+.waveform-bar {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  animation: waveBar 1s ease-in-out infinite;
+}
+@keyframes waveBar {
+  0%, 100% { height: 6px; }
+  50%       { height: 22px; }
+}
+
+/* ─── Timeline ───────────────────────────────────── */
+.timeline-line {
+  width: 2px;
+  background: linear-gradient(to bottom, var(--navy), var(--border));
+  min-height: 28px;
+}
+
+/* ─── Progress dots ──────────────────────────────── */
+.progress-dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  transition: background 0.2s, transform 0.2s;
+}
+.progress-dot.active { background: var(--accent); transform: scale(1.35); }
+.progress-dot.done   { background: var(--green); }
+
+/* ─── India stripe ───────────────────────────────── */
+.india-stripe {
+  height: 6px;
+  background: linear-gradient(to right, #FF9933 33.3%, #FFFFFF 33.3%, #FFFFFF 66.6%, #138808 66.6%);
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* ─── Reduced motion ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Prose (markdown rendering) ────────────────────*/
+.prose-chat strong { font-weight: 700; color: inherit; }
+.prose-chat em { font-style: italic; }
+.prose-chat br { display: block; margin-bottom: 4px; }
+html.dark .prose-chat { color: var(--bubble-bot-text); }
