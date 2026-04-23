@@ -1,5 +1,6 @@
-import { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useReducer, useEffect, useState } from 'react';
 import { getTranslation } from '../utils/translations';
+import { translateText } from '../services/translationService';
 
 // ─── Constants ────────────────────────────────────
 export const LANGUAGES = [
@@ -187,8 +188,36 @@ export function AppProvider({ children }) {
     html.classList.toggle('dark', darkMode);
   }, [state.accessibilitySettings]);
 
+  // Dynamic UI Translation Cache
+  const [dynamicCache, setDynamicCache] = useState({});
+
   // Helper to translate
-  const t = (key) => getTranslation(state.language, key);
+  const t = (key) => {
+    // 1. Check static translations first
+    const staticVal = getTranslation(state.language, key);
+    
+    // 2. If it's English (fallback) but the user language is regional
+    const isEnFallback = staticVal === getTranslation('en', key);
+    const isRegional = state.language !== 'en';
+
+    if (isRegional && isEnFallback && key !== 'welcome_subtitle') {
+      // 3. Check dynamic cache
+      const cacheKey = `${state.language}:${key}`;
+      if (dynamicCache[cacheKey]) return dynamicCache[cacheKey];
+
+      // 4. Trigger background translation (silent update)
+      const enText = getTranslation('en', key);
+      if (enText && typeof enText === 'string') {
+        translateText(enText, state.language).then(translated => {
+          if (translated && translated !== enText) {
+            setDynamicCache(prev => ({ ...prev, [cacheKey]: translated }));
+          }
+        });
+      }
+    }
+
+    return staticVal;
+  };
 
   return (
     <AppContext.Provider value={{ state, dispatch, t }}>
