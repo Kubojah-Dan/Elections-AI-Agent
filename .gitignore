@@ -30,3 +30,13 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Project specific exclusions
+*.pdf
+*.txt
+DEPLOY.md
+vercel.json
+package-lock.json
+dist/
+dist-ssr/
+node_modules/
