@@ -17,7 +17,6 @@ dist-ssr/
 *.sln
 *.sw?
 
-# Env file (never commit real keys)
 .env
 .env.example
 .env.local
