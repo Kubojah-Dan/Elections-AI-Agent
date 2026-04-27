@@ -61,15 +61,8 @@ npm install
 
 ### 3. Configuration
 Create a `.env` file in the root directory:
-```env
-VITE_GEMINI_API_KEY=your_key_here
-VITE_GOOGLE_CLOUD_API_KEY=your_key_here
-VITE_GROQ_API_KEY=your_fallback_key_here
-VITE_GOOGLE_MAPS_API_KEY=your_maps_key
-VITE_FIREBASE_API_KEY=your_firebase_key
-VITE_FIREBASE_PROJECT_ID=your_project_id
-# ... see .env for full firebase config placeholders
-```
+
+- **.env**: Contains all the API keys and configuration for the application.
 
 ### 4. Running Locally
 ```bash
@@ -97,12 +90,6 @@ npm run coverage
 - **HTML Sanitization**: Responses are sanitized using custom security utilities to prevent XSS.
 - **Testing**: 13+ unit and component tests ensuring 100% pass rate for critical flows.
 - **Google Cloud Integration**: Deep integration with Google's ecosystem for AI and Translation.
-
-## 🌍 Live Deployment
-The application is deployed on **Google Cloud Run** and is globally accessible:
-- **Application URL**: [https://matdata-mitra-tvotrbxe4q-uc.a.run.app](https://matdata-mitra-tvotrbxe4q-uc.a.run.app)
-- **Infrastructure**: Scalable, serverless container orchestration on Google Cloud Platform.
-
 ---
 
 Developed with ❤️ for the Indian Voter.

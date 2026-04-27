@@ -142,31 +142,25 @@ export default function ToolsPage() {
             actionLabel={t('Check My Status')}
           />
 
-          {/* Polling Day Simulator */}
-          <div className="mb-6">
-            <PollingStationSimulator />
-          </div>
-
-          {/* Find Polling Station */}
-          <ToolCard
-            icon={<MapPin size={22} className="text-india-navy" />}
-            title={t('Find Polling Station')}
-            subtitle={t('ECI Official Locator')}
-            description={t("Your polling station is usually within 2km of your registered address. Use ECI's tool to find exact location and booth number.")}
-            action={() => window.open('https://electoralsearch.eci.gov.in', '_blank', 'noopener,noreferrer')}
-            actionLabel={t('Find My Booth')}
-          />
-
-          <div className="mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-              <h4 className="text-xs font-bold text-mid-gray uppercase tracking-widest flex items-center gap-2">
-                <MapPin size={14} /> {t('Interactive Booth Locator')}
-              </h4>
+          {/* NEW: Interactive Booth Locator (Moved up for visibility) */}
+          <div className="card p-5 border-2 border-india-navy/10 bg-white/50">
+            <div className="flex flex-col gap-3 mb-4">
               <div className="flex items-center gap-2">
-                <label htmlFor="state-select" className="text-[10px] font-bold text-mid-gray uppercase">{t('Select State')}:</label>
+                <div className="w-8 h-8 rounded-lg bg-india-navy/10 flex items-center justify-center text-india-navy">
+                  <MapPin size={18} />
+                </div>
+                <h4 className="text-sm font-bold text-india-navy uppercase tracking-wide">
+                  {t('Interactive Booth Locator')}
+                </h4>
+              </div>
+              
+              <div className="space-y-1.5">
+                <label htmlFor="state-select" className="text-[10px] font-bold text-mid-gray uppercase tracking-wider ml-1">
+                  {t('Select Your State')}:
+                </label>
                 <select 
                   id="state-select"
-                  className="bg-white text-black border border-light-gray rounded-md px-2 py-1 text-xs focus:ring-1 focus:ring-india-navy outline-none"
+                  className="w-full bg-white text-black border-2 border-light-gray rounded-xl px-4 py-3 text-sm font-bold shadow-sm focus:border-india-navy outline-none cursor-pointer transition-all hover:bg-off-white"
                   value={selectedState}
                   onChange={(e) => setSelectedState(e.target.value)}
                 >
@@ -179,11 +173,27 @@ export default function ToolsPage() {
                 </select>
               </div>
             </div>
+            
             <PollingMap selectedState={selectedState} />
-            <p className="text-[10px] text-mid-gray mt-2 italic">
+            <p className="text-[10px] text-mid-gray mt-3 italic text-center">
               * {t('Map markers are for demonstration. Always refer to official ECI documents for your assigned booth.')}
             </p>
           </div>
+
+          {/* Polling Day Simulator */}
+          <div className="mb-6">
+            <PollingStationSimulator />
+          </div>
+
+          {/* Find Polling Station (Link) */}
+          <ToolCard
+            icon={<MapPin size={22} className="text-india-navy" />}
+            title={t('Find Polling Station')}
+            subtitle={t('ECI Official Locator')}
+            description={t("Your polling station is usually within 2km of your registered address. Use ECI's tool to find exact location and booth number.")}
+            action={() => window.open('https://electoralsearch.eci.gov.in', '_blank', 'noopener,noreferrer')}
+            actionLabel={t('Find My Booth')}
+          />
 
           {/* Form Finder */}
           <div className="card p-5">
