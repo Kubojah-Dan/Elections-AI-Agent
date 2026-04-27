@@ -1,6 +1,8 @@
 import { createContext, useContext, useReducer, useEffect, useState } from 'react';
 import { getTranslation } from '../utils/translations';
 import { translateText } from '../services/translationService';
+import { auth } from '../services/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 // ─── Constants ────────────────────────────────────
 export const LANGUAGES = [
@@ -65,6 +67,7 @@ const INITIAL_STATE = {
     darkMode: false,
     highContrast: false,
     readAloud: false,
+    premiumVoice: false,
     elderlyMode: false,
     simpleLanguage: false,
   },
@@ -132,6 +135,15 @@ const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, INITIAL_STATE);
+  const [user, setUser] = useState(null);
+
+  // Auth Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Hydrate from localStorage on mount
   useEffect(() => {
@@ -231,7 +243,7 @@ export function AppProvider({ children }) {
   };
 
   return (
-    <AppContext.Provider value={{ state, dispatch, t }}>
+    <AppContext.Provider value={{ state, dispatch, t, user }}>
       {children}
     </AppContext.Provider>
   );

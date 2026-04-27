@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../context/AppContext';
-import { speak } from '../../services/speechService';
+import { speak, speakPremium, stopSpeaking, isSpeaking } from '../../services/speechService';
 import SourceCard from '../ui/SourceCard';
 import { RichParser } from './RichResponse';
 
@@ -46,13 +46,18 @@ export default function MessageBubble({ message }) {
 
   function handleSpeak() {
     if (speaking) {
-      window.speechSynthesis?.cancel();
+      stopSpeaking();
       setSpeaking(false);
     } else {
       setSpeaking(true);
-      speak(message.content, state.language);
+      if (state.accessibilitySettings.premiumVoice) {
+        speakPremium(message.content, state.language);
+      } else {
+        speak(message.content, state.language);
+      }
+      
       const check = setInterval(() => {
-        if (!window.speechSynthesis?.speaking) {
+        if (!isSpeaking()) {
           setSpeaking(false);
           clearInterval(check);
         }

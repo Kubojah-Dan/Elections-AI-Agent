@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Search, MapPin, FileText, Smartphone, Phone, AlertTriangle, 
-  Check, ArrowRight, Download, Lock, ShieldAlert 
+import {
+  Search, MapPin, FileText, Smartphone, Phone, AlertTriangle,
+  Check, ArrowRight, Download, Lock, ShieldAlert
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getContent } from '../data/electionContent';
 import ToolCard from '../components/ui/ToolCard';
 import DocumentChecklist from '../components/ui/DocumentChecklist';
 import PollingStationSimulator from '../components/ui/PollingStationSimulator';
+import PollingMap from '../components/tools/PollingMap';
 
 // ─── Form Decision Tree ────────────────────────────
 function FormFinder() {
@@ -54,12 +55,12 @@ function FormFinder() {
               <p className="text-sm text-mid-gray">{result.desc}</p>
             </div>
             <a href={result.link} target="_blank" rel="noopener noreferrer" className="btn-primary w-full justify-center no-underline">
-              {t('fill_now', 'Fill %s Now').replace('%s', result.form)} ↗
+              {t('Fill %s Now').replace('%s', result.form)} ↗
             </a>
           </>
         ) : (
           <div className="p-4 bg-off-white border border-light-gray rounded-card text-sm text-mid-gray">
-            {t('form_not_found_note', 'Please contact your local Electoral Registration Officer (ERO) or call 1950 for guidance.')}
+            {t('Please contact your local Electoral Registration Officer (ERO) or call 1950 for guidance.')}
           </div>
         )}
         <button onClick={resetTree} className="btn-secondary w-full">
@@ -91,8 +92,8 @@ function FormFinder() {
           >
             <p className="font-semibold text-sm text-near-black mb-4">{qToShow.question}</p>
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => answer(true)} className="btn-primary py-3 justify-center flex items-center gap-1.5">{t('yes')} <Check size={16}/></button>
-              <button onClick={() => answer(false)} className="btn-secondary py-3 justify-center flex items-center gap-1.5">{t('no')} <ArrowRight size={16}/></button>
+              <button onClick={() => answer(true)} className="btn-primary py-3 justify-center flex items-center gap-1.5">{t('yes')} <Check size={16} /></button>
+              <button onClick={() => answer(false)} className="btn-secondary py-3 justify-center flex items-center gap-1.5">{t('no')} <ArrowRight size={16} /></button>
             </div>
           </motion.div>
         </AnimatePresence>
@@ -109,6 +110,7 @@ function FormFinder() {
 export default function ToolsPage() {
   const { t, state } = useApp();
   const [showFormFinder, setShowFormFinder] = useState(false);
+  const [selectedState, setSelectedState] = useState('Delhi');
 
   return (
     <div className="content-area">
@@ -126,18 +128,18 @@ export default function ToolsPage() {
         {/* ECI disclaimer */}
         <div className="mb-4 flex items-center gap-2 bg-off-white border border-light-gray rounded-lg px-3 py-2">
           <div className="w-2 h-2 rounded-full bg-india-green flex-shrink-0" />
-          <span className="text-xs text-mid-gray">{t('official_info_disclaimer', 'All links go directly to official Government of India / ECI websites')}</span>
+          <span className="text-xs text-mid-gray">{t('All links go directly to official Government of India / ECI websites')}</span>
         </div>
 
         <div className="space-y-4">
           {/* Check Voter Status */}
           <ToolCard
             icon={<Search size={22} className="text-india-navy" />}
-            title={t('check_voter_status')}
+            title={t('Check Voter Status')}
             subtitle="electoralsearch.eci.gov.in"
-            description={t('voter_status_desc', "Find out if you're registered to vote. Enter your name and state to see your registration status and polling station details.")}
+            description={t("Find out if you're registered to vote. Enter your name and state to see your registration status and polling station details.")}
             action={() => window.open('https://electoralsearch.eci.gov.in', '_blank', 'noopener,noreferrer')}
-            actionLabel={t('check_status_btn', 'Check My Status')}
+            actionLabel={t('Check My Status')}
           />
 
           {/* Polling Day Simulator */}
@@ -148,12 +150,40 @@ export default function ToolsPage() {
           {/* Find Polling Station */}
           <ToolCard
             icon={<MapPin size={22} className="text-india-navy" />}
-            title={t('find_polling_station')}
-            subtitle={t('eci_official_locator', 'ECI Official Locator')}
-            description={t('polling_station_desc', "Your polling station is usually within 2km of your registered address. Use ECI's tool to find exact location and booth number.")}
+            title={t('Find Polling Station')}
+            subtitle={t('ECI Official Locator')}
+            description={t("Your polling station is usually within 2km of your registered address. Use ECI's tool to find exact location and booth number.")}
             action={() => window.open('https://electoralsearch.eci.gov.in', '_blank', 'noopener,noreferrer')}
-            actionLabel={t('find_booth_btn', 'Find My Booth')}
+            actionLabel={t('Find My Booth')}
           />
+
+          <div className="mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+              <h4 className="text-xs font-bold text-mid-gray uppercase tracking-widest flex items-center gap-2">
+                <MapPin size={14} /> {t('Interactive Booth Locator')}
+              </h4>
+              <div className="flex items-center gap-2">
+                <label htmlFor="state-select" className="text-[10px] font-bold text-mid-gray uppercase">{t('Select State')}:</label>
+                <select 
+                  id="state-select"
+                  className="bg-white text-black border border-light-gray rounded-md px-2 py-1 text-xs focus:ring-1 focus:ring-india-navy outline-none"
+                  value={selectedState}
+                  onChange={(e) => setSelectedState(e.target.value)}
+                >
+                  <option value="Delhi">Delhi</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="West Bengal">West Bengal</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                </select>
+              </div>
+            </div>
+            <PollingMap selectedState={selectedState} />
+            <p className="text-[10px] text-mid-gray mt-2 italic">
+              * {t('Map markers are for demonstration. Always refer to official ECI documents for your assigned booth.')}
+            </p>
+          </div>
 
           {/* Form Finder */}
           <div className="card p-5">
@@ -196,8 +226,8 @@ export default function ToolsPage() {
           <ToolCard
             icon={<Smartphone size={22} className="text-india-navy" />}
             title={t('download_eepic')}
-            subtitle={t('digital_voter_id', 'Digital Voter ID Card')}
-            description={t('download_epic_desc', 'Download your Electronic Electoral Photo Identity Card (E-EPIC) as a PDF from the official voter portal. Accepted at polling stations as valid ID.')}
+            subtitle={t('Digital Voter ID Card')}
+            description={t('Download your Electronic Electoral Photo Identity Card (E-EPIC) as a PDF from the official voter portal. Accepted at polling stations as valid ID.')}
             action={() => window.open('https://voters.eci.gov.in', '_blank', 'noopener,noreferrer')}
             actionLabel={t('download_eepic')}
           />
@@ -286,42 +316,42 @@ export default function ToolsPage() {
 
           {/* Quick Support / Report Rumor */}
           <div className="p-5 bg-india-navy rounded-2xl text-white shadow-xl">
-             <div className="flex items-center gap-3 mb-3">
-                <ShieldAlert className="text-india-saffron" size={24} />
-                <h3 className="font-bold">{t('report_misinformation_title', 'Report Misinformation')}</h3>
-              </div>
-              <p className="text-xs text-white/70 mb-4">
-                {t('report_misinformation_desc', 'Found a viral message or news about elections that seems suspicious? Help us track rumors.')}
-              </p>
-             <div className="flex flex-col sm:flex-row gap-2">
-               <input 
-                 id="rumor-input"
-                 type="text" 
-                 placeholder={t('paste_rumor_placeholder', 'Paste suspicious text here...')} 
-                 className="flex-1 bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-sm text-white placeholder:text-white/60 focus:outline-none focus:border-india-saffron transition-all"
-               />
-               <button 
-                 onClick={() => {
-                   const val = document.getElementById('rumor-input').value;
-                   if (val) {
-                     window.dispatchEvent(new CustomEvent('log-rumor', { detail: val }));
-                     document.getElementById('rumor-input').value = '';
-                      alert(t('rumor_thank_you', 'Thank you! This has been logged for admin review.'));
-                   }
-                 }}
-                 className="bg-[#FF9933] text-[#000000] font-bold px-6 py-3 rounded-lg text-sm hover:bg-[#FFB366] transition-all whitespace-nowrap shadow-lg flex items-center justify-center gap-2"
-               >
-                 {t('send_report_btn', 'Send Report')} <ArrowRight size={16} />
-               </button>
-             </div>
+            <div className="flex items-center gap-3 mb-3">
+              <ShieldAlert className="text-india-saffron" size={24} />
+              <h3 className="font-bold">{t('Report Misinformation')}</h3>
+            </div>
+            <p className="text-xs text-white/70 mb-4">
+              {t('Found a viral message or news about elections that seems suspicious? Help us track rumors.')}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                id="rumor-input"
+                type="text"
+                placeholder={t('Paste suspicious text here...')}
+                className="flex-1 bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-sm text-white placeholder:text-white/60 focus:outline-none focus:border-india-saffron transition-all"
+              />
+              <button
+                onClick={() => {
+                  const val = document.getElementById('rumor-input').value;
+                  if (val) {
+                    window.dispatchEvent(new CustomEvent('log-rumor', { detail: val }));
+                    document.getElementById('rumor-input').value = '';
+                    alert(t('Thank you! This has been logged for admin review.'));
+                  }
+                }}
+                className="bg-[#FF9933] text-[#000000] font-bold px-6 py-3 rounded-lg text-sm hover:bg-[#FFB366] transition-all whitespace-nowrap shadow-lg flex items-center justify-center gap-2"
+              >
+                {t('Send Report')} <ArrowRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Official disclaimer */}
         <div className="mt-6 mb-2 text-center">
           <p className="text-xs text-mid-gray flex items-start justify-center gap-1.5 px-4">
-            <Lock size={14} className="flex-shrink-0 mt-0.5" /> 
-            <span>{t('official_voters_url_disclaimer', 'All tool links lead exclusively to official eci.gov.in government portals. If in doubt, always type the URL directly into your browser.')}</span>
+            <Lock size={14} className="flex-shrink-0 mt-0.5" />
+            <span>{t('All tool links lead exclusively to official eci.gov.in government portals. If in doubt, always type the URL directly into your browser.')}</span>
           </p>
         </div>
       </div>

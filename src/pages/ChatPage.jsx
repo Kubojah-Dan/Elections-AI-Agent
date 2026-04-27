@@ -91,8 +91,12 @@ export default function ChatPage() {
 
       // Auto read-aloud if enabled
       if (state.accessibilitySettings.readAloud) {
-        const { speak } = await import('../services/speechService');
-        speak(cleanText, state.language);
+        const { speak, speakPremium } = await import('../services/speechService');
+        if (state.accessibilitySettings.premiumVoice) {
+          speakPremium(cleanText, state.language);
+        } else {
+          speak(cleanText, state.language);
+        }
       }
 
     } catch (err) {

@@ -40,3 +40,6 @@ package-lock.json
 dist/
 dist-ssr/
 node_modules/
+GOOGLE_SETUP_GUIDE.md
+.gcloudignore
+cloudbuild.yaml

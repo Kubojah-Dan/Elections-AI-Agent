@@ -5,21 +5,75 @@ import {
   ArrowUpRight, ArrowDownRight, Clock, Search
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { getStats, getLogs } from '../services/loggingService';
+import { getStats, getLogs, subscribeToLogs, subscribeToStats } from '../services/loggingService';
+import { signInWithGoogle, logout } from '../services/firebase';
+import { LogIn, LogOut, ShieldCheck } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const { t } = useApp();
+  const { t, user } = useApp();
   const [stats, setStats] = useState(getStats());
   const [recentIncidents, setRecentIncidents] = useState(getLogs());
 
   useEffect(() => {
-    // Refresh every 5 seconds for "real-time" feel
-    const interval = setInterval(() => {
-      setStats(getStats());
-      setRecentIncidents(getLogs());
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    if (!user) return;
+
+    // Real-time Firestore Listeners
+    const unsubscribeLogs = subscribeToLogs((logs) => setRecentIncidents(logs));
+    const unsubscribeStats = subscribeToStats((newStats) => setStats(newStats));
+
+    return () => {
+      unsubscribeLogs();
+      unsubscribeStats();
+    };
+  }, [user]);
+
+  const [authError, setAuthError] = useState(null);
+
+  const handleLogin = async () => {
+    try {
+      setAuthError(null);
+      await signInWithGoogle();
+    } catch (error) {
+      console.error("Auth error:", error);
+      if (error.code === 'auth/unauthorized-domain') {
+        setAuthError("This domain is not authorized for authentication. Please add it to your Firebase Console.");
+      } else {
+        setAuthError("Authentication failed. Please check your credentials or network.");
+      }
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center bg-off-white px-4">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-md w-full bg-white rounded-3xl p-8 shadow-xl border border-light-gray text-center"
+        >
+          <div className="w-20 h-20 bg-india-navy rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <ShieldCheck size={40} className="text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-india-navy mb-2">{t('admin_access')}</h1>
+          <p className="text-mid-gray mb-8">{t('admin_signin_sub')}</p>
+          
+          {authError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-medium">
+              {authError}
+            </div>
+          )}
+
+          <button 
+            onClick={handleLogin}
+            className="w-full flex items-center justify-center gap-3 bg-white border-2 border-light-gray hover:border-india-navy py-4 rounded-xl font-bold text-near-black transition-all group"
+          >
+            <LogIn size={20} className="group-hover:translate-x-1 transition-transform" />
+            {t('signin_google')}
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
   const topIntents = [
     { name: 'Voter Registration', count: 3200 + (stats.totalMessages % 50), growth: 12 },
@@ -53,19 +107,25 @@ export default function AdminDashboard() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-8" style={{ paddingTop: 'calc(var(--topbar-height) + 24px)' }}>
       <header className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-india-navy">{t('Admin Intelligence Dashboard')}</h1>
-          <p className="text-sm text-mid-gray">{t('Monitoring Matdata Mitra performance & safety')}</p>
+        <div className="flex items-center gap-4">
+          {user.photoURL && <img src={user.photoURL} alt="" className="w-12 h-12 rounded-full border-2 border-india-navy shadow-sm" />}
+          <div>
+            <h1 className="text-2xl font-bold text-india-navy">{t('admin_dashboard_title')}</h1>
+            <p className="text-sm text-mid-gray">{user.email}</p>
+          </div>
         </div>
         <div className="flex gap-3">
-          <button className="px-4 py-2 rounded-lg bg-white border border-light-gray text-sm font-medium flex items-center gap-2">
-            <Clock size={16} /> Last 24 Hours
+          <button 
+            onClick={logout}
+            className="px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm font-medium hover:bg-red-100 transition-colors flex items-center gap-2 border border-red-200"
+          >
+            <LogOut size={16} /> {t('logout')}
           </button>
-          <button
+          <button 
             onClick={exportReport}
             className="px-4 py-2 rounded-lg bg-india-navy text-white text-sm font-medium hover:bg-blue-900 transition-colors shadow-md"
           >
-            {t('Export Report')}
+            {t('export_report')}
           </button>
         </div>
       </header>
@@ -153,8 +213,8 @@ export default function AdminDashboard() {
       {/* Recent Incidents */}
       <div className="p-6 rounded-2xl bg-white border border-light-gray">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-bold text-india-navy">{t('Safety & Moderation Log')}</h3>
-          <button className="text-sm text-india-navy font-medium">{t('View All Logs')}</button>
+          <h3 className="text-lg font-bold text-india-navy">{t('safety_log_title')}</h3>
+          <button className="text-sm text-india-navy font-medium">{t('view_all_logs')}</button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">

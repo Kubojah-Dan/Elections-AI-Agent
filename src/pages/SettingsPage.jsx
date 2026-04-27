@@ -119,8 +119,8 @@ export default function SettingsPage() {
                 <button
                   key={size.id}
                   className={`py-3 rounded-btn border-2 text-center transition-all ${!a11y.elderlyMode && a11y.textSize === size.id || (a11y.elderlyMode && size.id === 'xlarge')
-                      ? 'border-india-navy bg-blue-50'
-                      : 'border-light-gray hover:border-india-navy'
+                    ? 'border-india-navy bg-blue-50'
+                    : 'border-light-gray hover:border-india-navy'
                     }`}
                   onClick={() => updateA11y({ textSize: size.id, elderlyMode: false })}
                   aria-pressed={!a11y.elderlyMode ? a11y.textSize === size.id : size.id === 'xlarge'}
@@ -188,6 +188,20 @@ export default function SettingsPage() {
                 value={a11y.readAloud}
                 onChange={v => updateA11y({ readAloud: v })}
                 label={t('read_aloud')}
+              />
+            }
+          />
+          <Row
+            icon={<Wind className="text-india-navy" size={20} />}
+            label={t('Premium Voice')}
+            sublabel={t('Use high-quality human-like voices (requires data)')}
+            divider
+            control={
+              <ToggleSwitch
+                id="premium-voice"
+                value={a11y.premiumVoice}
+                onChange={v => updateA11y({ premiumVoice: v })}
+                label={t('premium_voice')}
               />
             }
           />

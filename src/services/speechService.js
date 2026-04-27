@@ -1,6 +1,7 @@
-// src/services/speechService.js
+import axios from 'axios';
 
 let currentUtterance = null;
+let currentAudio = null;
 let recognition = null;
 
 // ─── Language code mapping for Web Speech API ──────
@@ -11,11 +12,23 @@ const SPEECH_LANG_MAP = {
   as: 'as-IN', ne: 'ne-IN', sa: 'sa-IN',
 };
 
+// ─── Google Cloud TTS Voice Mapping ──────
+const GOOGLE_TTS_VOICES = {
+  en: { name: 'en-IN-Wavenet-D', languageCode: 'en-IN' },
+  hi: { name: 'hi-IN-Wavenet-B', languageCode: 'hi-IN' },
+  bn: { name: 'bn-IN-Wavenet-B', languageCode: 'bn-IN' },
+  ta: { name: 'ta-IN-Wavenet-B', languageCode: 'ta-IN' },
+  te: { name: 'te-IN-Standard-B', languageCode: 'te-IN' },
+  gu: { name: 'gu-IN-Standard-B', languageCode: 'gu-IN' },
+  kn: { name: 'kn-IN-Standard-B', languageCode: 'kn-IN' },
+  ml: { name: 'ml-IN-Standard-B', languageCode: 'ml-IN' },
+};
+
 function getSpeechLang(lang) {
   return SPEECH_LANG_MAP[lang] || 'en-IN';
 }
 
-// ─── Text to Speech ────────────────────────────────
+// ─── Text to Speech (Browser Fallback) ──────────────
 export function speak(text, lang = 'en') {
   if (!('speechSynthesis' in window)) return;
 
@@ -46,14 +59,69 @@ export function speak(text, lang = 'en') {
   window.speechSynthesis.speak(currentUtterance);
 }
 
+// ─── Google Cloud TTS (Premium) ────────────────────
+export async function speakPremium(text, lang = 'en') {
+  try {
+    stopSpeaking();
+
+    const apiKey = import.meta.env.VITE_GOOGLE_TTS_API_KEY || import.meta.env.VITE_GOOGLE_CLOUD_API_KEY;
+    if (!apiKey || apiKey.includes('YOUR_')) {
+      console.warn('No Google Cloud API Key for TTS. Falling back to browser speech.');
+      return speak(text, lang);
+    }
+
+    const voice = GOOGLE_TTS_VOICES[lang] || GOOGLE_TTS_VOICES['en'];
+    
+    // Strip markdown
+    const cleanText = text
+      .replace(/\*\*/g, '')
+      .replace(/\*/g, '')
+      .replace(/#{1,6}\s/g, '')
+      .replace(/\n{2,}/g, '. ')
+      .replace(/\n/g, '. ')
+      .replace(/\[Quick:[^\]]*\]/g, '')
+      .trim();
+
+    const response = await axios.post(
+      `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
+      {
+        input: { text: cleanText },
+        voice: { 
+          languageCode: voice.languageCode, 
+          name: voice.name,
+          ssmlGender: 'NEUTRAL'
+        },
+        audioConfig: { audioEncoding: 'MP3' }
+      }
+    );
+
+    const audioContent = response.data.audioContent;
+    const audioBlob = new Blob([Uint8Array.from(atob(audioContent), c => c.charCodeAt(0))], { type: 'audio/mp3' });
+    const audioUrl = URL.createObjectURL(audioBlob);
+
+    currentAudio = new Audio(audioUrl);
+    currentAudio.play();
+  } catch (err) {
+    console.error('Premium TTS failed:', err);
+    speak(text, lang); // Fallback
+  }
+}
+
 export function stopSpeaking() {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
   }
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
+  }
 }
 
 export function isSpeaking() {
-  return 'speechSynthesis' in window && window.speechSynthesis.speaking;
+  const isBrowserSpeaking = 'speechSynthesis' in window && window.speechSynthesis.speaking;
+  const isPremiumSpeaking = !!(currentAudio && !currentAudio.paused);
+  return isBrowserSpeaking || isPremiumSpeaking;
 }
 
 // ─── Speech Recognition ────────────────────────────

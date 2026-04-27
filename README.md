@@ -15,7 +15,10 @@
 - **Dynamic Personas**: Tailored guidance for First-time Voters, Registered Voters, Elderly, NRI Voters, Polling Officials, and Curious Learners.
 - **Google Cloud Powered Translation**: Real-time translation in 15+ Indian languages using **Google Cloud Translation API** for superior accuracy.
 - **Primary Intelligence**: Uses **Google Gemini 1.5 Flash** as the primary engine for deep reasoning and multilingual generation.
-- **Admin Intelligence Dashboard**: A premium analytics hub to monitor user intents, language adoption, and safety incidents in real-time.
+- **Admin Intelligence Dashboard**: A premium analytics hub protected by **Google Identity (Firebase Auth)** to monitor user intents, language adoption, and safety incidents in real-time.
+- **Real-time Monitoring**: Safety logs and metrics are synced via **Firebase Firestore** for instant remote visibility.
+- **Interactive Booth Locator**: Integrated **Google Maps Platform** allowing users to visually locate polling stations and get one-tap directions.
+- **Premium Cloud TTS**: High-quality, human-like voice synthesis using **Google Cloud Text-to-Speech API** (Wavenet) for superior accessibility in regional languages.
 - **Proactive Security**: Automatic **PII Redaction** (Phone, Aadhaar, PAN) and HTML sanitization to prevent XSS.
 - **Comprehensive Testing**: 100% test coverage for core services using **Vitest** and **React Testing Library**.
 - **Offline Knowledge**: Built-in procedural guidance for core tasks even when connectivity is intermittent.
@@ -29,19 +32,16 @@
 graph TD
     User((User)) -->|Interacts| UI[React Frontend]
     UI -->|Context| AppContext[State Management]
-    AppContext -->|Request| AIService[AI Orchestration Layer]
+    AppContext -->|Auth| Firebase_Auth[Google Identity]
+    UI -->|Map| Google_Maps[Google Maps Platform]
     
     AIService -->|Primary| Gemini[Google Gemini 1.5 Flash]
-    AIService -->|Fallback| Groq[Llama-3.1 8B API]
+    AIService -->|Log| Firestore[Firebase Firestore]
+    AIService -->|TTS| Cloud_TTS[Premium Google TTS]
     AIService -->|Security| PII_Redactor[PII Redactor]
-    AIService -->|Critical| RumorDetect[Rumor Detection Engine]
     
-    PII_Redactor --> Gemini
-    PII_Redactor --> Groq
-    
-    RumorDetect -->|Neutral Info| UI
-    Gemini -->|Response| UI
-    Groq -->|Response| UI
+    Firestore -->|Sync| Admin_Dashboard[Admin Analytics]
+    Firebase_Auth -->|Protect| Admin_Dashboard
 ```
 
 ---
@@ -65,6 +65,10 @@ Create a `.env` file in the root directory:
 VITE_GEMINI_API_KEY=your_key_here
 VITE_GOOGLE_CLOUD_API_KEY=your_key_here
 VITE_GROQ_API_KEY=your_fallback_key_here
+VITE_GOOGLE_MAPS_API_KEY=your_maps_key
+VITE_FIREBASE_API_KEY=your_firebase_key
+VITE_FIREBASE_PROJECT_ID=your_project_id
+# ... see .env for full firebase config placeholders
 ```
 
 ### 4. Running Locally
@@ -93,6 +97,11 @@ npm run coverage
 - **HTML Sanitization**: Responses are sanitized using custom security utilities to prevent XSS.
 - **Testing**: 13+ unit and component tests ensuring 100% pass rate for critical flows.
 - **Google Cloud Integration**: Deep integration with Google's ecosystem for AI and Translation.
+
+## 🌍 Live Deployment
+The application is deployed on **Google Cloud Run** and is globally accessible:
+- **Application URL**: [https://matdata-mitra-tvotrbxe4q-uc.a.run.app](https://matdata-mitra-tvotrbxe4q-uc.a.run.app)
+- **Infrastructure**: Scalable, serverless container orchestration on Google Cloud Platform.
 
 ---
 
