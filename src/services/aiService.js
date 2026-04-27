@@ -1,5 +1,6 @@
 // src/services/aiService.js
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { logEvent } from './loggingService';
 
 // ─── System Prompt ────────────────────────────────
 const ELECTION_SYSTEM_PROMPT = `You are the Election Process Education Agent for India, deployed on Matdata Mitra.
@@ -89,11 +90,28 @@ function buildMessages(messages, persona, language) {
   return { systemPrompt, conversationMessages: messages };
 }
 
-// ─── Gemini Fallback API ────────────────────────────
+// ─── PII Redaction ──────────────────────────────────
+function redactPII(text) {
+  if (!text) return text;
+  const original = text;
+  const redacted = text
+    .replace(/\b\d{10}\b/g, '[PHONE]') // 10-digit numbers
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, '[EMAIL]') // emails
+    .replace(/\b\d{4}\s\d{4}\s\d{4}\b/g, '[AADHAAR]') // Aadhaar format
+    .replace(/\b[A-Z]{5}\d{4}[A-Z]\b/g, '[PAN]'); // PAN format
+  
+  if (original !== redacted) {
+    logEvent('PII', original, 'Redacted');
+  }
+  return redacted;
+}
+
+// ─── Gemini Primary API ────────────────────────────
 async function callGemini(messages, persona, language) {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-    throw new Error('Gemini API key not configured');
+  const env = import.meta.env || (typeof process !== 'undefined' ? process.env : {});
+  const apiKey = env.VITE_GEMINI_API_KEY || env.VITE_GOOGLE_CLOUD_API_KEY;
+  if (!apiKey || apiKey === 'your_gemini_api_key_here' || apiKey === 'your_google_cloud_api_key_here') {
+    throw new Error('Gemini/Google Cloud API key not configured');
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -101,7 +119,7 @@ async function callGemini(messages, persona, language) {
     model: 'gemini-1.5-flash',
     generationConfig: {
       temperature: 0.3,
-      maxOutputTokens: 1024,
+      maxOutputTokens: 2048,
     },
   });
 
@@ -111,18 +129,19 @@ async function callGemini(messages, persona, language) {
     systemInstruction: systemPrompt,
     history: conversationMessages.slice(0, -1).map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
+      parts: [{ text: redactPII(m.content) }],
     })),
   });
 
   const lastMessage = conversationMessages[conversationMessages.length - 1];
-  const result = await chat.sendMessage(lastMessage.content);
+  const result = await chat.sendMessage(redactPII(lastMessage.content));
   return result.response.text();
 }
 
-// ─── Groq Primary API ──────────────────────────────
+// ─── Groq Fallback API ──────────────────────────────
 async function callGroq(messages, persona, language) {
-  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  const env = import.meta.env || (typeof process !== 'undefined' ? process.env : {});
+  const apiKey = env.VITE_GROQ_API_KEY;
   if (!apiKey || apiKey === 'your_groq_api_key_here') {
     throw new Error('Groq API key not configured');
   }
@@ -141,7 +160,7 @@ async function callGroq(messages, persona, language) {
         { role: 'system', content: systemPrompt },
         ...conversationMessages.map(m => ({
           role: m.role === 'assistant' ? 'assistant' : 'user',
-          content: m.content,
+          content: redactPII(m.content),
         })),
       ],
       temperature: 0.3,
@@ -164,38 +183,40 @@ export async function getAgentResponse(messages, persona = null, language = 'en'
   const isPotentialRumor = RUMOR_KEYWORDS.some(k => lastUserMessage.toLowerCase().includes(k));
 
   try {
-    let response = await callGroq(messages, persona, language);
+    // Gemini is now Primary
+    let response = await callGemini(messages, persona, language);
     
     if (isPotentialRumor) {
+      logEvent('Rumor', lastUserMessage, 'Fact checked');
       const prefix = language === 'hi' 
         ? '⚠️ **तटस्थ तथ्य जांच:** मैंने आपके प्रश्न में एक संभावित अफवाह का पता लगाया है। यहाँ आधिकारिक जानकारी है:\n\n'
         : '⚠️ **Neutral Fact Check:** I detected a potential rumor in your query. Here is the official information:\n\n';
       response = prefix + response;
+    } else {
+      logEvent('Chat', lastUserMessage, 'Success');
     }
 
     return response;
-  } catch (groqError) {
-    console.warn('Groq failed, trying Gemini:', groqError.message);
+  } catch (geminiError) {
+    console.warn('Gemini failed, trying Groq:', geminiError.message);
     try {
-      return await callGemini(messages, persona, language);
-    } catch (geminiError) {
-      console.warn('Gemini also failed:', geminiError.message);
+      return await callGroq(messages, persona, language);
+    } catch (groqError) {
+      console.warn('Groq also failed:', groqError.message);
 
       // If genuinely offline
       if (!navigator.onLine) {
-        return '**You appear to be offline.**\n\n' + getOfflineResponse(lastUserMessage?.content || '');
+        return '**You appear to be offline.**\n\n' + getOfflineResponse(lastUserMessage);
       }
 
-      // API key missing / not configured
       const errStr = (geminiError.message || '') + ' ' + (groqError.message || '');
       const noKey = errStr.includes('API key') || errStr.includes('not configured') || errStr.includes('401');
       
       if (noKey) {
-        return '**API keys not configured.** Please add your `VITE_GEMINI_API_KEY` and `VITE_GROQ_API_KEY` to the `.env` file and restart the dev server.\n\nWhile you do that, here is some helpful information:\n\n' + getOfflineResponse(lastUserMessage?.content || '');
+        return '**API keys not configured.** Please add your `VITE_GEMINI_API_KEY` to the `.env` file.\n\n' + getOfflineResponse(lastUserMessage);
       }
 
-      // Rate limit or server error — give cached answer
-      return '**Service temporarily busy.** Here is what I know from my built-in knowledge:\n\n' + getOfflineResponse(lastUserMessage?.content || '');
+      return '**Service temporarily busy.**\n\n' + getOfflineResponse(lastUserMessage);
     }
   }
 }

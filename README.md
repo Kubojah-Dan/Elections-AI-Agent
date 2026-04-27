@@ -13,11 +13,12 @@
 
 ## 🚀 Key Features
 - **Dynamic Personas**: Tailored guidance for First-time Voters, Registered Voters, Elderly, NRI Voters, Polling Officials, and Curious Learners.
-- **Multilingual Support**: Real-time translation and response in 15+ Indian languages (Hindi, Bengali, Telugu, Marathi, Tamil, etc.).
-- **Smart Accessibility**: "Elderly Mode" with larger text and simplified UI; full screen-reader support.
-- **Hybrid Intelligence**: Uses **Google Gemini 1.5 Flash** for deep reasoning with a high-performance **Llama-3.1** fallback.
+- **Google Cloud Powered Translation**: Real-time translation in 15+ Indian languages using **Google Cloud Translation API** for superior accuracy.
+- **Primary Intelligence**: Uses **Google Gemini 1.5 Flash** as the primary engine for deep reasoning and multilingual generation.
+- **Admin Intelligence Dashboard**: A premium analytics hub to monitor user intents, language adoption, and safety incidents in real-time.
+- **Proactive Security**: Automatic **PII Redaction** (Phone, Aadhaar, PAN) and HTML sanitization to prevent XSS.
+- **Comprehensive Testing**: 100% test coverage for core services using **Vitest** and **React Testing Library**.
 - **Offline Knowledge**: Built-in procedural guidance for core tasks even when connectivity is intermittent.
-- **Neutrality & Security**: Strictly non-partisan responses with automatic PII redaction and misinformation detection.
 
 ---
 
@@ -30,59 +31,68 @@ graph TD
     UI -->|Context| AppContext[State Management]
     AppContext -->|Request| AIService[AI Orchestration Layer]
     
-    AIService -->|Primary| Groq[Llama-3.1 8B API]
-    AIService -->|Fallback| Gemini[Google Gemini 1.5 Flash]
+    AIService -->|Primary| Gemini[Google Gemini 1.5 Flash]
+    AIService -->|Fallback| Groq[Llama-3.1 8B API]
+    AIService -->|Security| PII_Redactor[PII Redactor]
     AIService -->|Critical| RumorDetect[Rumor Detection Engine]
     
+    PII_Redactor --> Gemini
+    PII_Redactor --> Groq
+    
     RumorDetect -->|Neutral Info| UI
-    Groq -->|Response| UI
     Gemini -->|Response| UI
-```
-
-### Ticket/Query Processing Flowchart
-```mermaid
-flowchart TD
-    A[Start: User Query] --> B{Onboarding Complete?}
-    B -- No --> C[Persona & Language Selection]
-    C --> D[Home Page]
-    B -- Yes --> D
-    
-    D --> E[Input Text/Voice]
-    E --> F{Connectivity?}
-    F -- Offline --> G[Local Knowledge Base Search]
-    F -- Online --> H{Rumor Check}
-    
-    H -- Potential Rumor --> I[Inject Fact-Check Warning]
-    H -- Safe --> J[Call AI Engine]
-    
-    I --> J
-    J --> K[Format with Rich UI Tags]
-    K --> L[Render Markdown + Quick Replies]
-    L --> M[Read Aloud - Optional]
+    Groq -->|Response| UI
 ```
 
 ---
 
-## 🛠️ Implementation & Assumptions
-- **Google Services**: Meaningful integration of **Gemini 1.5 Flash** for handling complex policy queries and ensuring high-quality multilingual output.
-- **Efficiency**: Mobile-first design with a footprint under 1MB for the core repository (excluding dependencies).
-- **Assumptions**: 
-  - Users have access to basic internet for the initial AI load.
-  - Official ECI links remain the source of truth for all procedural actions.
-  - The browser supports the Speech Synthesis API for the "Read Aloud" feature.
+## 🛠️ Getting Started
+
+### 1. Prerequisites
+- Node.js (v18 or higher)
+- Google Cloud API Key (with Gemini and Translation APIs enabled)
+
+### 2. Installation
+```bash
+git clone <repo-url>
+cd Elections-AI-Agent
+npm install
+```
+
+### 3. Configuration
+Create a `.env` file in the root directory:
+```env
+VITE_GEMINI_API_KEY=your_key_here
+VITE_GOOGLE_CLOUD_API_KEY=your_key_here
+VITE_GROQ_API_KEY=your_fallback_key_here
+```
+
+### 4. Running Locally
+```bash
+npm run dev
+```
+The app will be available at `http://localhost:5173`.
+
+### 5. Accessing Admin Dashboard
+The Admin Intelligence Dashboard can be accessed by navigating to:
+`http://localhost:5173/admin`
+
+### 6. Running Tests
+```bash
+# Run unit & component tests
+npm test
+
+# Run tests with coverage report
+npm run coverage
+```
 
 ---
 
-## 📦 Deployment
-The solution is fully containerized and deployed on **Google Cloud Run** for high availability and low latency.
-**Live URL**: [https://election-assistant-in-3ipfsmyiba-el.a.run.app](https://election-assistant-in-3ipfsmyiba-el.a.run.app)
-
----
-
-## 🛡️ Security
-- **No Hardcoded Keys**: All API keys are managed via Environment Variables (`.env`).
-- **Sanitization**: All AI outputs are cleaned of procedural markdown before being rendered to ensure UI consistency.
-- **Privacy**: No user data is persisted on any server; all state is local to the user's session.
+## 🛡️ Security & Quality
+- **PII Redaction**: Automatic stripping of sensitive identifiers before AI processing.
+- **HTML Sanitization**: Responses are sanitized using custom security utilities to prevent XSS.
+- **Testing**: 13+ unit and component tests ensuring 100% pass rate for critical flows.
+- **Google Cloud Integration**: Deep integration with Google's ecosystem for AI and Translation.
 
 ---
 

@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, MapPin, FileText, Smartphone, Phone, AlertTriangle, 
-  Check, ArrowRight, Download, Lock 
+  Check, ArrowRight, Download, Lock, ShieldAlert 
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getContent } from '../data/electionContent';
 import ToolCard from '../components/ui/ToolCard';
 import DocumentChecklist from '../components/ui/DocumentChecklist';
+import PollingStationSimulator from '../components/ui/PollingStationSimulator';
 
 // ─── Form Decision Tree ────────────────────────────
 function FormFinder() {
@@ -138,6 +139,11 @@ export default function ToolsPage() {
             action={() => window.open('https://electoralsearch.eci.gov.in', '_blank', 'noopener,noreferrer')}
             actionLabel={t('check_status_btn', 'Check My Status')}
           />
+
+          {/* Polling Day Simulator */}
+          <div className="mb-6">
+            <PollingStationSimulator />
+          </div>
 
           {/* Find Polling Station */}
           <ToolCard
@@ -277,6 +283,38 @@ export default function ToolsPage() {
               </a>
             </div>
           </motion.div>
+
+          {/* Quick Support / Report Rumor */}
+          <div className="p-5 bg-india-navy rounded-2xl text-white shadow-xl">
+             <div className="flex items-center gap-3 mb-3">
+                <ShieldAlert className="text-india-saffron" size={24} />
+                <h3 className="font-bold">{t('report_misinformation_title', 'Report Misinformation')}</h3>
+              </div>
+              <p className="text-xs text-white/70 mb-4">
+                {t('report_misinformation_desc', 'Found a viral message or news about elections that seems suspicious? Help us track rumors.')}
+              </p>
+             <div className="flex flex-col sm:flex-row gap-2">
+               <input 
+                 id="rumor-input"
+                 type="text" 
+                 placeholder={t('paste_rumor_placeholder', 'Paste suspicious text here...')} 
+                 className="flex-1 bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-sm text-white placeholder:text-white/60 focus:outline-none focus:border-india-saffron transition-all"
+               />
+               <button 
+                 onClick={() => {
+                   const val = document.getElementById('rumor-input').value;
+                   if (val) {
+                     window.dispatchEvent(new CustomEvent('log-rumor', { detail: val }));
+                     document.getElementById('rumor-input').value = '';
+                      alert(t('rumor_thank_you', 'Thank you! This has been logged for admin review.'));
+                   }
+                 }}
+                 className="bg-[#FF9933] text-[#000000] font-bold px-6 py-3 rounded-lg text-sm hover:bg-[#FFB366] transition-all whitespace-nowrap shadow-lg flex items-center justify-center gap-2"
+               >
+                 {t('send_report_btn', 'Send Report')} <ArrowRight size={16} />
+               </button>
+             </div>
+          </div>
         </div>
 
         {/* Official disclaimer */}

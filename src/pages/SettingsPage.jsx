@@ -78,7 +78,7 @@ export default function SettingsPage() {
   const currentLang = LANGUAGES.find(l => l.code === language);
   const textSizes = [
     { id: 'normal', label: 'Normal (A)', size: 'text-sm' },
-    { id: 'large',  label: 'Large (A+)', size: 'text-base' },
+    { id: 'large', label: 'Large (A+)', size: 'text-base' },
     { id: 'xlarge', label: 'Extra Large (A++)', size: 'text-lg' },
   ];
 
@@ -118,11 +118,10 @@ export default function SettingsPage() {
               {textSizes.map(size => (
                 <button
                   key={size.id}
-                  className={`py-3 rounded-btn border-2 text-center transition-all ${
-                    !a11y.elderlyMode && a11y.textSize === size.id || (a11y.elderlyMode && size.id === 'xlarge')
+                  className={`py-3 rounded-btn border-2 text-center transition-all ${!a11y.elderlyMode && a11y.textSize === size.id || (a11y.elderlyMode && size.id === 'xlarge')
                       ? 'border-india-navy bg-blue-50'
                       : 'border-light-gray hover:border-india-navy'
-                  }`}
+                    }`}
                   onClick={() => updateA11y({ textSize: size.id, elderlyMode: false })}
                   aria-pressed={!a11y.elderlyMode ? a11y.textSize === size.id : size.id === 'xlarge'}
                 >
@@ -253,7 +252,7 @@ export default function SettingsPage() {
             <div className="text-center">
               <div className="font-serif font-bold text-india-navy text-lg">{t('welcome_title')}</div>
               <div className="text-mid-gray text-sm">{t('welcome_subtitle')}</div>
-              <div className="text-xs text-mid-gray mt-1">{t('version')} • Built for ECI Challenge 2</div>
+              <div className="text-xs text-mid-gray mt-1">{t('version')} • Built for The People of India</div>
             </div>
 
             <div className="bg-off-white rounded-lg p-3 space-y-2 text-xs text-mid-gray">

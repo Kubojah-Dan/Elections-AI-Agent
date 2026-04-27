@@ -188,11 +188,23 @@ export function AppProvider({ children }) {
     html.classList.toggle('dark', darkMode);
   }, [state.accessibilitySettings]);
 
-  // Dynamic UI Translation Cache
-  const [dynamicCache, setDynamicCache] = useState({});
+  // Dynamic UI Translation Cache (Persisted)
+  const [dynamicCache, setDynamicCache] = useState(() => {
+    try {
+      const saved = localStorage.getItem('matdata-mitra-translations');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Save cache to localStorage
+  useEffect(() => {
+    localStorage.setItem('matdata-mitra-translations', JSON.stringify(dynamicCache));
+  }, [dynamicCache]);
 
   // Helper to translate
-  const t = (key) => {
+  const t = (key, fallback = '') => {
     // 1. Check static translations first
     const staticVal = getTranslation(state.language, key);
     
@@ -200,13 +212,12 @@ export function AppProvider({ children }) {
     const isEnFallback = staticVal === getTranslation('en', key);
     const isRegional = state.language !== 'en';
 
-    if (isRegional && isEnFallback && key !== 'welcome_subtitle') {
-      // 3. Check dynamic cache
+    if (isRegional && isEnFallback) {
       const cacheKey = `${state.language}:${key}`;
       if (dynamicCache[cacheKey]) return dynamicCache[cacheKey];
 
-      // 4. Trigger background translation (silent update)
-      const enText = getTranslation('en', key);
+      // 3. Trigger background translation
+      const enText = fallback || getTranslation('en', key);
       if (enText && typeof enText === 'string') {
         translateText(enText, state.language).then(translated => {
           if (translated && translated !== enText) {
@@ -216,7 +227,7 @@ export function AppProvider({ children }) {
       }
     }
 
-    return staticVal;
+    return staticVal || fallback || key;
   };
 
   return (

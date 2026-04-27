@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useApp } from './context/AppContext';
+import { logEvent } from './services/loggingService';
 import TopBar from './components/layout/TopBar';
 import BottomNav from './components/layout/BottomNav';
 import WelcomePage from './pages/WelcomePage';
@@ -12,6 +13,7 @@ import LearnPage from './pages/LearnPage';
 import ToolsPage from './pages/ToolsPage';
 import CalendarPage from './pages/CalendarPage';
 import SettingsPage from './pages/SettingsPage';
+import AdminDashboard from './pages/AdminDashboard';
 
 function RequireOnboarding({ children }) {
   const { state } = useApp();
@@ -30,6 +32,12 @@ export default function App() {
     document.documentElement.setAttribute('dir', rtlLangs.includes(state.language) ? 'rtl' : 'ltr');
     document.documentElement.setAttribute('lang', state.language || 'en');
   }, [state.language]);
+
+  useEffect(() => {
+    const handleRumor = (e) => logEvent('Rumor', e.detail, 'Reported');
+    window.addEventListener('log-rumor', handleRumor);
+    return () => window.removeEventListener('log-rumor', handleRumor);
+  }, []);
 
   const isAppPage = !['/', '/onboarding'].includes(location.pathname) && state.onboardingComplete;
 
@@ -65,6 +73,7 @@ export default function App() {
                 path="/settings"
                 element={<RequireOnboarding><SettingsPage /></RequireOnboarding>}
               />
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </AnimatePresence>

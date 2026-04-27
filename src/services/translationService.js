@@ -11,7 +11,7 @@ const LANG_MAP = {
 const cache = new Map();
 
 /**
- * Translate text using MyMemory API (free, no key required for basic use)
+ * Translate text using Google Cloud Translation API
  */
 export async function translateText(text, targetLang = 'en') {
   if (!text || targetLang === 'en') return text;
@@ -22,12 +22,51 @@ export async function translateText(text, targetLang = 'en') {
   const cacheKey = `${apiLang}:${text.slice(0, 50)}`;
   if (cache.has(cacheKey)) return cache.get(cacheKey);
 
+  const env = import.meta.env || {};
+  const apiKey = env.VITE_GOOGLE_CLOUD_API_KEY || env.VITE_GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'your_google_cloud_api_key_here' || apiKey === 'your_gemini_api_key_here') {
+    console.warn('Google Cloud Translation API key not configured, falling back to MyMemory');
+    return translateTextFallback(text, apiLang, cacheKey);
+  }
+
   try {
-    const encoded = encodeURIComponent(text.slice(0, 500)); // MyMemory limit
+    const url = `https://translation.googleapis.com/language/translate/v2?key=${apiKey}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({
+        q: text,
+        target: apiLang,
+        format: 'text',
+      }),
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!res.ok) throw new Error('Translation request failed');
+    
+    const data = await res.json();
+    if (data?.data?.translations?.[0]?.translatedText) {
+      const translated = data.data.translations[0].translatedText;
+      cache.set(cacheKey, translated);
+      return translated;
+    }
+    return text;
+  } catch (error) {
+    console.error('Google Translation failed:', error);
+    return translateTextFallback(text, apiLang, cacheKey);
+  }
+}
+
+/**
+ * Fallback to MyMemory API if Google fails or key is missing
+ */
+async function translateTextFallback(text, apiLang, cacheKey) {
+  try {
+    const encoded = encodeURIComponent(text.slice(0, 500));
     const url = `https://api.mymemory.translated.net/get?q=${encoded}&langpair=en|${apiLang}`;
     
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) throw new Error('Translation request failed');
+    if (!res.ok) return text;
     
     const data = await res.json();
     if (data?.responseStatus === 200 && data?.responseData?.translatedText) {
@@ -35,9 +74,9 @@ export async function translateText(text, targetLang = 'en') {
       cache.set(cacheKey, translated);
       return translated;
     }
-    return text; // Return original if translation fails
+    return text;
   } catch {
-    return text; // Graceful fallback
+    return text;
   }
 }
 

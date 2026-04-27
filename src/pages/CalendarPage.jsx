@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
-import { Calendar, MapPin, Bell, AlertCircle, Info, CheckCircle2, Clock } from 'lucide-react';
+import { Calendar, MapPin, Bell, AlertCircle, Info, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
 
 const ELECTION_DATES = [
   { state: 'Maharashtra', type: 'Legislative Assembly', date: '2024-11-20', deadline: '2024-10-25', status: 'upcoming' },
@@ -10,7 +10,16 @@ const ELECTION_DATES = [
   { state: 'Bihar', type: 'Legislative Assembly', date: '2025-10-25', deadline: '2025-09-30', status: 'scheduled' },
   { state: 'West Bengal', type: 'Legislative Assembly', date: '2026-05-10', deadline: '2026-04-15', status: 'scheduled' },
   { state: 'Tamil Nadu', type: 'Legislative Assembly', date: '2026-05-20', deadline: '2026-04-25', status: 'scheduled' },
-  { state: 'Kerala', type: 'Legislative Assembly', date: '2026-05-15', deadline: ' केरल-04-20', status: 'scheduled' },
+  { state: 'Kerala', type: 'Legislative Assembly', date: '2026-05-15', deadline: '2026-04-20', status: 'scheduled' },
+  { state: 'Assam', type: 'Legislative Assembly', date: '2026-04-12', deadline: '2026-03-15', status: 'scheduled' },
+  { state: 'Puducherry', type: 'Legislative Assembly', date: '2026-05-05', deadline: '2026-04-10', status: 'scheduled' },
+  { state: 'Uttar Pradesh', type: 'Legislative Assembly', date: '2027-02-10', deadline: '2027-01-15', status: 'scheduled' },
+  { state: 'Punjab', type: 'Legislative Assembly', date: '2027-02-20', deadline: '2027-01-25', status: 'scheduled' },
+  { state: 'Uttarakhand', type: 'Legislative Assembly', date: '2027-02-15', deadline: '2027-01-20', status: 'scheduled' },
+  { state: 'Manipur', type: 'Legislative Assembly', date: '2027-03-05', deadline: '2027-02-10', status: 'scheduled' },
+  { state: 'Goa', type: 'Legislative Assembly', date: '2027-02-25', deadline: '2027-01-30', status: 'scheduled' },
+  { state: 'Gujarat', type: 'Legislative Assembly', date: '2027-12-05', deadline: '2027-11-10', status: 'scheduled' },
+  { state: 'Himachal Pradesh', type: 'Legislative Assembly', date: '2027-11-15', deadline: '2027-10-20', status: 'scheduled' },
 ];
 
 export default function CalendarPage() {
@@ -22,8 +31,12 @@ export default function CalendarPage() {
     ? ELECTION_DATES.filter(e => e.state === selectedState)
     : ELECTION_DATES;
 
-  const toggleReminder = (id) => {
-    setReminders(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleReminder = (id, stateName) => {
+    const isAdding = !reminders[id];
+    setReminders(prev => ({ ...prev, [id]: isAdding }));
+    if (isAdding) {
+      alert(`🔔 Reminder Set: We will notify you when ${stateName} elections are near!`);
+    }
   };
 
   const getDaysRemaining = (dateStr) => {
@@ -35,7 +48,7 @@ export default function CalendarPage() {
     <div className="content-area">
       <div className="max-w-2xl mx-auto px-4 pt-4">
         
-        <div className="mb-6">
+        <div className="mb-6 text-center lg:text-left">
           <h1 className="section-header">Election Calendar</h1>
           {state.language !== 'en' && (
             <p className="text-xs font-bold text-india-saffron -mt-1 mb-1">
@@ -46,22 +59,27 @@ export default function CalendarPage() {
         </div>
 
         {/* State Selector */}
-        <div className="card p-4 mb-6 bg-india-navy text-white" style={{ background: 'var(--gradient-navy)' }}>
-          <div className="flex items-center gap-2 mb-3">
-            <MapPin size={18} className="text-india-saffron" />
-            <span className="font-semibold">{t('select_your_state')}</span>
+        <div className="card p-5 mb-6 bg-india-navy text-white shadow-xl overflow-hidden" style={{ background: 'var(--gradient-navy)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <MapPin size={20} className="text-india-saffron" />
+            <span className="font-bold text-lg">{t('select_your_state')}</span>
           </div>
-          <select 
-            value={selectedState}
-            onChange={(e) => setSelectedState(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-india-saffron transition-all"
-            style={{ color: 'white' }}
-          >
-            <option value="" className="text-near-black">{t('all_india_view')}</option>
-            {[...new Set(ELECTION_DATES.map(e => e.state))].sort().map(s => (
-              <option key={s} value={s} className="text-near-black">{s}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select 
+              value={selectedState}
+              onChange={(e) => setSelectedState(e.target.value)}
+              className="w-full bg-white/10 border border-white/30 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-india-saffron transition-all appearance-none"
+              style={{ color: 'white' }}
+            >
+              <option value="" style={{ color: 'black' }}>{t('all_india_view')}</option>
+              {[...new Set(ELECTION_DATES.map(e => e.state))].sort().map(s => (
+                <option key={s} value={s} style={{ color: 'black' }}>{s}</option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-60">
+              <Clock size={16} />
+            </div>
+          </div>
         </div>
 
         {/* Calendar Feed */}
@@ -76,58 +94,62 @@ export default function CalendarPage() {
                 <motion.div
                   key={id}
                   layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="card overflow-hidden"
+                  className="card overflow-hidden border-l-4 border-l-india-saffron"
                 >
-                  <div className="india-stripe" />
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-3">
+                  <div className="p-5">
+                    <div className="flex justify-between items-start mb-4">
                       <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider bg-off-white px-2 py-0.5 rounded text-mid-gray border border-light-gray">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-[10px] font-bold uppercase tracking-widest bg-off-white px-2.5 py-1 rounded-md text-mid-gray border border-light-gray">
                             {election.type}
                           </span>
-                          {daysLeft < 30 && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-600 px-2 py-0.5 rounded border border-red-200 flex items-center gap-1">
-                              <Clock size={10} /> {t('critical')}
+                          {daysLeft < 60 && (
+                            <span className="text-[10px] font-bold uppercase tracking-widest bg-red-50 text-red-600 px-2.5 py-1 rounded-md border border-red-100 flex items-center gap-1">
+                              <Bell size={10} className="animate-bounce" /> {t('critical')}
                             </span>
                           )}
                         </div>
-                        <h3 className="text-lg font-bold text-india-navy">{election.state}</h3>
+                        <h3 className="text-xl font-bold text-india-navy dark:text-white">{election.state}</h3>
                       </div>
                       <button 
-                        onClick={() => toggleReminder(id)}
-                        className={`p-2 rounded-full transition-all ${reminders[id] ? 'bg-india-saffron text-white' : 'bg-off-white text-mid-gray'}`}
+                        onClick={() => toggleReminder(id, election.state)}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm ${reminders[id] ? 'bg-india-saffron text-white' : 'bg-off-white text-mid-gray hover:bg-light-gray'}`}
                       >
-                        <Bell size={18} fill={reminders[id] ? 'currentColor' : 'none'} />
+                        <Bell size={20} fill={reminders[id] ? 'currentColor' : 'none'} />
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-off-white p-3 rounded-xl border border-light-gray">
-                        <div className="text-[10px] font-bold text-mid-gray uppercase mb-1">{t('polling_day')}</div>
-                        <div className="text-sm font-bold text-near-black">{new Date(election.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-                        <div className="text-[10px] text-india-green font-bold mt-1">{daysLeft} {t('days_to_go')}</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                      <div className="bg-off-white dark:bg-india-navy/5 p-4 rounded-2xl border border-light-gray">
+                        <div className="text-[10px] font-bold text-mid-gray uppercase tracking-wider mb-2">{t('polling_day')}</div>
+                        <div className="text-base font-bold text-near-black dark:text-white">{new Date(election.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                        <div className="text-xs text-india-green font-bold mt-1.5 flex items-center gap-1">
+                           <Clock size={12} /> {daysLeft} {t('days_to_go')}
+                        </div>
                       </div>
-                      <div className="bg-amber-50 p-3 rounded-xl border border-amber-100">
-                        <div className="text-[10px] font-bold text-amber-800 uppercase mb-1">{t('reg_deadline')}</div>
-                        <div className="text-sm font-bold text-amber-900">{new Date(election.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-                        <div className="text-[10px] text-amber-700 font-bold mt-1">
+                      <div className="bg-amber-50/50 dark:bg-amber-900/10 p-4 rounded-2xl border border-amber-100 dark:border-amber-900/20">
+                        <div className="text-[10px] font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider mb-2">{t('reg_deadline')}</div>
+                        <div className="text-base font-bold text-amber-900 dark:text-amber-200">{new Date(election.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                        <div className="text-xs text-amber-700 dark:text-amber-500 font-bold mt-1.5">
                           {deadlineLeft > 0 ? `${deadlineLeft} ${t('days_left')}` : t('deadline_passed')}
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs pt-3 border-t border-light-gray">
-                      <div className="flex items-center gap-1.5 text-mid-gray">
-                        <Info size={14} />
+                    <div className="flex items-center justify-between text-xs pt-4 border-t border-light-gray">
+                      <div className="flex items-center gap-2 text-mid-gray">
+                        <Info size={14} className="text-india-navy dark:text-blue-400" />
                         <span>{t('source_eci_calendar')}</span>
                       </div>
-                      <button className="text-india-navy font-bold flex items-center gap-1 hover:underline">
-                        {t('view_details')} <Clock size={12} />
+                      <button 
+                        onClick={() => window.open('https://elections24.eci.gov.in/', '_blank')}
+                        className="text-india-navy dark:text-blue-400 font-bold flex items-center gap-1.5 hover:underline group"
+                      >
+                        {t('view_details')} <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
                       </button>
                     </div>
                   </div>
@@ -137,22 +159,22 @@ export default function CalendarPage() {
           </AnimatePresence>
 
           {filteredElections.length === 0 && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-off-white rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertCircle size={32} className="text-light-gray" />
+            <div className="text-center py-16">
+              <div className="w-20 h-20 bg-off-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                <AlertCircle size={40} className="text-light-gray" />
               </div>
-              <p className="text-mid-gray">{t('no_elections_found')}</p>
+              <p className="text-mid-gray font-medium">{t('no_elections_found')}</p>
             </div>
           )}
         </div>
 
         {/* Info Box */}
-        <div className="mt-8 p-4 rounded-xl bg-blue-50 border border-blue-100 flex gap-3">
-          <Info className="text-india-navy flex-shrink-0" size={20} />
+        <div className="mt-10 p-5 rounded-2xl bg-off-white dark:bg-india-navy/10 border border-light-gray flex gap-4">
+          <Info className="text-india-navy dark:text-blue-400 flex-shrink-0 mt-0.5" size={24} />
           <div>
-            <h4 className="text-sm font-bold text-india-navy mb-1">{t('important_note')}</h4>
-            <p className="text-xs text-india-navy/70 leading-relaxed">
-              {t('calendar_disclaimer')}
+            <h4 className="text-sm font-bold text-near-black dark:text-white mb-1.5">{t('important_note')}</h4>
+            <p className="text-xs text-mid-gray dark:text-white/70 leading-relaxed">
+              {t('calendar_disclaimer', 'Dates are subject to official notifications by the Election Commission of India. Please verify with official sources periodically as schedules may be updated.')}
             </p>
           </div>
         </div>
