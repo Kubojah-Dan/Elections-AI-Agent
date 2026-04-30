@@ -106,12 +106,19 @@ function redactPII(text) {
   return redacted;
 }
 
-// ─── Gemini Primary API ────────────────────────────
+/**
+ * Gemini Primary API Implementation
+ * @param {Array} messages - Conversation history
+ * @param {string} persona - User persona
+ * @param {string} language - Target language
+ * @returns {Promise<string>} AI response text
+ */
 async function callGemini(messages, persona, language) {
   const env = import.meta.env || (typeof process !== 'undefined' ? process.env : {});
   const apiKey = env.VITE_GEMINI_API_KEY || env.VITE_GOOGLE_CLOUD_API_KEY;
+  
   if (!apiKey || apiKey === 'your_gemini_api_key_here' || apiKey === 'your_google_cloud_api_key_here') {
-    throw new Error('Gemini/Google Cloud API key not configured');
+    throw new Error('Google Gemini API key not configured');
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -138,52 +145,18 @@ async function callGemini(messages, persona, language) {
   return result.response.text();
 }
 
-// ─── Groq Fallback API ──────────────────────────────
-async function callGroq(messages, persona, language) {
-  const env = import.meta.env || (typeof process !== 'undefined' ? process.env : {});
-  const apiKey = env.VITE_GROQ_API_KEY;
-  if (!apiKey || apiKey === 'your_groq_api_key_here') {
-    throw new Error('Groq API key not configured');
-  }
-
-  const { systemPrompt, conversationMessages } = buildMessages(messages, persona, language);
-
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'llama-3.1-8b-instant',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...conversationMessages.map(m => ({
-          role: m.role === 'assistant' ? 'assistant' : 'user',
-          content: redactPII(m.content),
-        })),
-      ],
-      temperature: 0.3,
-      max_tokens: 4096,
-    }),
-  });
-
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(`Groq error: ${err.error?.message || response.statusText}`);
-  }
-
-  const data = await response.json();
-  return data.choices[0].message.content;
-}
-
-// ─── Primary Export ────────────────────────────────
+/**
+ * Primary Export: Gets response from the educational AI agent
+ * @param {Array} messages - Chat history
+ * @param {string|null} persona - Optional user persona for tailored tone
+ * @param {string} language - Language code (e.g., 'en', 'hi')
+ * @returns {Promise<string>}
+ */
 export async function getAgentResponse(messages, persona = null, language = 'en') {
   const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content || '';
   const isPotentialRumor = RUMOR_KEYWORDS.some(k => lastUserMessage.toLowerCase().includes(k));
 
   try {
-    // Gemini is now Primary
     let response = await callGemini(messages, persona, language);
     
     if (isPotentialRumor) {
@@ -197,27 +170,21 @@ export async function getAgentResponse(messages, persona = null, language = 'en'
     }
 
     return response;
-  } catch (geminiError) {
-    console.warn('Gemini failed, trying Groq:', geminiError.message);
-    try {
-      return await callGroq(messages, persona, language);
-    } catch (groqError) {
-      console.warn('Groq also failed:', groqError.message);
+  } catch (error) {
+    console.error('AI Service Error:', error.message);
 
-      // If genuinely offline
-      if (!navigator.onLine) {
-        return '**You appear to be offline.**\n\n' + getOfflineResponse(lastUserMessage);
-      }
-
-      const errStr = (geminiError.message || '') + ' ' + (groqError.message || '');
-      const noKey = errStr.includes('API key') || errStr.includes('not configured') || errStr.includes('401');
-      
-      if (noKey) {
-        return '**API keys not configured.** Please add your `VITE_GEMINI_API_KEY` to the `.env` file.\n\n' + getOfflineResponse(lastUserMessage);
-      }
-
-      return '**Service temporarily busy.**\n\n' + getOfflineResponse(lastUserMessage);
+    // Network connectivity check
+    if (!navigator.onLine) {
+      return '**You appear to be offline.**\n\n' + getOfflineResponse(lastUserMessage);
     }
+
+    // API Key issues
+    if (error.message.includes('API key') || error.message.includes('401')) {
+      return '**API Authentication Error.** Please ensure your Google Cloud project is correctly configured.\n\n' + getOfflineResponse(lastUserMessage);
+    }
+
+    // Default fallback to offline knowledge base
+    return '**Service temporarily busy.** Our automated assistant is processing many requests. Here is some general information:\n\n' + getOfflineResponse(lastUserMessage);
   }
 }
 

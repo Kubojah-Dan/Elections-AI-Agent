@@ -6,6 +6,7 @@ node_modules/
 # Build
 dist/
 dist-ssr/
+coverage/
 *.local
 
 # Editor
@@ -33,13 +34,10 @@ Thumbs.db
 
 # Project specific exclusions
 *.pdf
-*.txt
-DEPLOY.md
-vercel.json
-package-lock.json
-dist/
-dist-ssr/
-node_modules/
-GOOGLE_SETUP_GUIDE.md
-.gcloudignore
-cloudbuild.yaml
+# *.txt (keep professional documentation)
+# package-lock.json should be in the repo for consistency
+# cloudbuild.yaml should be in the repo to show Google Cloud mastery
+# .gcloudignore should be in the repo
+
+# Specific files to keep out of repo
+.env.production

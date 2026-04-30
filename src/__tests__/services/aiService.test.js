@@ -1,50 +1,90 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getAgentResponse, extractQuickReplies, extractSource, cleanResponseText } from '@/services/aiService';
 
-// Mock the dependencies
+// Mock the dependencies FIRST
+const mockSendMessage = vi.fn();
+const mockGetGenerativeModel = vi.fn().mockReturnValue({
+  startChat: vi.fn().mockReturnValue({
+    sendMessage: mockSendMessage
+  })
+});
+
 vi.mock('@google/generative-ai', () => ({
   GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
-    getGenerativeModel: vi.fn().mockImplementation(() => ({
-      startChat: vi.fn().mockImplementation(() => ({
-        sendMessage: vi.fn().mockResolvedValue({
-          response: { text: () => 'Mocked Gemini Response [Quick: Help | More] [Source: ECI | https://eci.gov.in]' }
-        })
-      }))
-    }))
+    getGenerativeModel: mockGetGenerativeModel
   }))
 }));
+
+vi.mock('@/services/loggingService', () => ({
+  logEvent: vi.fn(),
+}));
+
+// Set env before import
+vi.stubEnv('VITE_GEMINI_API_KEY', 'valid-mock-key');
+
+// Import AFTER mocks
+const { getAgentResponse, extractQuickReplies, extractSource, cleanResponseText } = await import('@/services/aiService');
 
 describe('aiService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Stub environment variables in both process.env and vi.stubEnv
-    process.env.VITE_GEMINI_API_KEY = 'valid-mock-key';
-    process.env.VITE_GROQ_API_KEY = 'valid-mock-key';
     vi.stubEnv('VITE_GEMINI_API_KEY', 'valid-mock-key');
-    vi.stubEnv('VITE_GROQ_API_KEY', 'valid-mock-key');
+    // Ensure process.env is also set
+    if (typeof process !== 'undefined') {
+      process.env.VITE_GEMINI_API_KEY = 'valid-mock-key';
+    }
     
-    // Mock global fetch
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({
-        choices: [{ message: { content: 'Mocked Groq Response' } }]
-      })
+    // Mock window.navigator.onLine
+    Object.defineProperty(window.navigator, 'onLine', {
+      value: true,
+      configurable: true
+    });
+    
+    mockSendMessage.mockResolvedValue({
+      response: { text: () => 'Mocked Gemini Response [Quick: Help | More] [Source: ECI | https://eci.gov.in]' }
     });
   });
 
   describe('getAgentResponse', () => {
-    it('should return a valid response (from Gemini or Groq)', async () => {
+    it('should return a valid response from Gemini', async () => {
       const messages = [{ role: 'user', content: 'How to register?' }];
-      const response = await getAgentResponse(messages);
-      
-      // Check if it returns one of our mocked responses
-      expect(response).toMatch(/Mocked Gemini Response|Mocked Groq Response/);
+      const response = await getAgentResponse(messages, null, 'en');
+      expect(response).toContain('Mocked Gemini Response');
     });
 
     it('should handle PII redaction correctly', async () => {
-      const messages = [{ role: 'user', content: 'My phone is 9876543210' }];
+      const messages = [{ role: 'user', content: 'My Aadhaar is 1234 5678 9012' }];
+      await getAgentResponse(messages);
+      const lastCall = mockSendMessage.mock.calls[0][0];
+      expect(lastCall).toContain('[AADHAAR]');
+    });
+
+    it('should detect rumors and add a prefix', async () => {
+      const messages = [{ role: 'user', content: 'Is the EVM hacked?' }];
       const response = await getAgentResponse(messages);
-      expect(response).toBeDefined();
+      expect(response).toContain('Neutral Fact Check');
+    });
+
+    it('should return offline response when navigator is offline', async () => {
+      Object.defineProperty(window.navigator, 'onLine', { value: false });
+      mockSendMessage.mockRejectedValue(new Error('Network Error'));
+      
+      const messages = [{ role: 'user', content: 'How to register?' }];
+      const response = await getAgentResponse(messages);
+      expect(response).toContain('You appear to be offline');
+    });
+
+    it('should handle authentication errors', async () => {
+      mockSendMessage.mockRejectedValue(new Error('API key invalid 401'));
+      const messages = [{ role: 'user', content: 'Hello' }];
+      const response = await getAgentResponse(messages);
+      expect(response).toContain('API Authentication Error');
+    });
+
+    it('should handle generic errors with offline fallback', async () => {
+      mockSendMessage.mockRejectedValue(new Error('Unknown Error'));
+      const messages = [{ role: 'user', content: 'How to vote?' }];
+      const response = await getAgentResponse(messages);
+      expect(response).toContain('Service temporarily busy');
     });
   });
 
